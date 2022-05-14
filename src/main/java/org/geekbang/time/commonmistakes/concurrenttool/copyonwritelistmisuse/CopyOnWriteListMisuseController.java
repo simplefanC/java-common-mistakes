@@ -17,6 +17,10 @@ import java.util.stream.IntStream;
 @Slf4j
 public class CopyOnWriteListMisuseController {
 
+    /**
+     * 10 万次 add 操作
+     * 测试并发写的性能
+     */
     @GetMapping("write")
     public Map testWrite() {
         List<Integer> copyOnWriteArrayList = new CopyOnWriteArrayList<>();
@@ -24,10 +28,14 @@ public class CopyOnWriteListMisuseController {
         StopWatch stopWatch = new StopWatch();
         int loopCount = 100000;
         stopWatch.start("Write:copyOnWriteArrayList");
-        IntStream.rangeClosed(1, loopCount).parallel().forEach(__ -> copyOnWriteArrayList.add(ThreadLocalRandom.current().nextInt(loopCount)));
+        // 循环100000次并发往CopyOnWriteArrayList写入随机元素
+        IntStream.rangeClosed(1, loopCount).parallel()
+                .forEach(__ -> copyOnWriteArrayList.add(ThreadLocalRandom.current().nextInt(loopCount)));
         stopWatch.stop();
         stopWatch.start("Write:synchronizedList");
-        IntStream.rangeClosed(1, loopCount).parallel().forEach(__ -> synchronizedList.add(ThreadLocalRandom.current().nextInt(loopCount)));
+        // 循环100000次并发往加锁的ArrayList写入随机元素
+        IntStream.rangeClosed(1, loopCount).parallel()
+                .forEach(__ -> synchronizedList.add(ThreadLocalRandom.current().nextInt(loopCount)));
         stopWatch.stop();
         log.info(stopWatch.prettyPrint());
         Map result = new HashMap();
@@ -40,20 +48,28 @@ public class CopyOnWriteListMisuseController {
         list.addAll(IntStream.rangeClosed(1, 1000000).boxed().collect(Collectors.toList()));
     }
 
+    /**
+     * 测试并发读的性能
+     */
     @GetMapping("read")
     public Map testRead() {
         List<Integer> copyOnWriteArrayList = new CopyOnWriteArrayList<>();
         List<Integer> synchronizedList = Collections.synchronizedList(new ArrayList<>());
+        // 填充List
         addAll(copyOnWriteArrayList);
         addAll(synchronizedList);
         StopWatch stopWatch = new StopWatch();
         int loopCount = 1000000;
         int count = copyOnWriteArrayList.size();
         stopWatch.start("Read:copyOnWriteArrayList");
-        IntStream.rangeClosed(1, loopCount).parallel().forEach(__ -> copyOnWriteArrayList.get(ThreadLocalRandom.current().nextInt(count)));
+        // 循环1000000次并发从CopyOnWriteArrayList随机查询元素
+        IntStream.rangeClosed(1, loopCount).parallel()
+                .forEach(__ -> copyOnWriteArrayList.get(ThreadLocalRandom.current().nextInt(count)));
         stopWatch.stop();
         stopWatch.start("Read:synchronizedList");
-        IntStream.range(0, loopCount).parallel().forEach(__ -> synchronizedList.get(ThreadLocalRandom.current().nextInt(count)));
+        // 循环1000000次并发从加锁的ArrayList随机查询元素
+        IntStream.range(0, loopCount).parallel()
+                .forEach(__ -> synchronizedList.get(ThreadLocalRandom.current().nextInt(count)));
         stopWatch.stop();
         log.info(stopWatch.prettyPrint());
         Map result = new HashMap();

@@ -19,7 +19,13 @@ import java.util.stream.LongStream;
 @Slf4j
 public class ConcurrentHashMapMisuseController {
 
+    /**
+     * 线程个数
+     */
     private static int THREAD_COUNT = 10;
+    /**
+     * 总元素数量
+     */
     private static int ITEM_COUNT = 1000;
 
     private ConcurrentHashMap<String, Long> getData(int count) {
@@ -32,17 +38,27 @@ public class ConcurrentHashMapMisuseController {
     @GetMapping("wrong")
     public String wrong() throws InterruptedException {
         ConcurrentHashMap<String, Long> concurrentHashMap = getData(ITEM_COUNT - 100);
+        // 初始900个元素
         log.info("init size:{}", concurrentHashMap.size());
 
         ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
-        forkJoinPool.execute(() -> IntStream.rangeClosed(1, 10).parallel().forEach(i -> {
-            int gap = ITEM_COUNT - concurrentHashMap.size();
-            log.info("gap size:{}", gap);
-            concurrentHashMap.putAll(getData(gap));
-        }));
+        // 使用线程池并发处理逻辑
+        forkJoinPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                IntStream.rangeClosed(1, 10).parallel().forEach(i -> {
+                    // 查询还需要补充多少个元素
+                    int gap = ITEM_COUNT - concurrentHashMap.size();
+                    log.info("gap size:{}", gap);
+                    // 补充元素
+                    concurrentHashMap.putAll(ConcurrentHashMapMisuseController.this.getData(gap));
+                });
+            }
+        });
+        // 等待所有任务完成
         forkJoinPool.shutdown();
         forkJoinPool.awaitTermination(1, TimeUnit.HOURS);
-
+        // 最后元素个数会是1000吗？
         log.info("finish size:{}", concurrentHashMap.size());
         return "OK";
     }
@@ -54,6 +70,7 @@ public class ConcurrentHashMapMisuseController {
 
         ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
         forkJoinPool.execute(() -> IntStream.rangeClosed(1, 10).parallel().forEach(i -> {
+            // 下面的这段复合逻辑需要锁一下这个ConcurrentHashMap
             synchronized (concurrentHashMap) {
                 int gap = ITEM_COUNT - concurrentHashMap.size();
                 log.info("gap size:{}", gap);

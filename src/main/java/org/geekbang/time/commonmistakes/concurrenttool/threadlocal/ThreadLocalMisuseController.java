@@ -14,6 +14,11 @@ public class ThreadLocalMisuseController {
 
     private static final ThreadLocal<Integer> currentUser = ThreadLocal.withInitial(() -> null);
 
+    /**
+     * localhost:8080/threadlocal/wrong?userId=1
+     * @param userId
+     * @return
+     */
     @GetMapping("wrong")
     public Map wrong(@RequestParam("userId") Integer userId) {
         String before  = Thread.currentThread().getName() + ":" + currentUser.get();
