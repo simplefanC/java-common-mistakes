@@ -1,6 +1,6 @@
 package org.geekbang.time.commonmistakes.threadpool.threadpoolmixuse;
 
-import jodd.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,18 +26,22 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 public class ThreadPoolMixuseController {
 
     private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-            2, 2,
-            1, TimeUnit.HOURS,
+            2,
+            2,
+            1,
+            TimeUnit.HOURS,
             new ArrayBlockingQueue<>(100),
-            new ThreadFactoryBuilder().setNameFormat("batchfileprocess-threadpool-%d").get(),
+            new ThreadFactoryBuilder().setNameFormat("batchfileprocess-threadpool-%d").build(),
             new ThreadPoolExecutor.CallerRunsPolicy());
 
 
     private static ThreadPoolExecutor asyncCalcThreadPool = new ThreadPoolExecutor(
-            200, 200,
-            1, TimeUnit.HOURS,
+            200,
+            200,
+            1,
+            TimeUnit.HOURS,
             new ArrayBlockingQueue<>(1000),
-            new ThreadFactoryBuilder().setNameFormat("asynccalc-threadpool-%d").get());
+            new ThreadFactoryBuilder().setNameFormat("asynccalc-threadpool-%d").build());
 
     private void printStats(ThreadPoolExecutor threadPool) {
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
