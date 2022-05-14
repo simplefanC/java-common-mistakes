@@ -1,7 +1,7 @@
 package org.geekbang.time.commonmistakes.lock.lockscope;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
+import org.springframework.util.Assert;
 
 @Slf4j
 public class Interesting {
@@ -32,7 +32,7 @@ public class Interesting {
     public synchronized void compareRight() {
         log.info("compare start");
         for (int i = 0; i < 1000000; i++) {
-            Assert.assertTrue(a == b);
+            Assert.isTrue(a == b, "a!=b");
             if (a < b) {
                 log.info("a:{},b:{},{}", a, b, a > b);
             }
