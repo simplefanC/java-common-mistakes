@@ -5,7 +5,9 @@ import org.springframework.util.Assert;
 
 @Slf4j
 public class Interesting {
-
+    /**
+     * 需要加volatile
+     */
     volatile int a = 1;
     volatile int b = 1;
 
